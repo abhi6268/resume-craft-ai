@@ -12,7 +12,10 @@ async function postAnalyze(payload: {
     jobTitle: string;
     jobDescription: string;
 }) {
-    const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+    const API_BASE =
+        import.meta.env.PROD
+            ? import.meta.env.VITE_API_BASE_URL
+            : "http://localhost:3001";
 
     const res = await fetch(`${API_BASE}/api/analyze`, {
         method: "POST",
