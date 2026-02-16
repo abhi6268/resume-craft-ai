@@ -200,8 +200,8 @@ app.use((req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-    console.log(`\n🚀 API Server running on http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`API listening on ${PORT}`);
     console.log(`📊 Health check: http://localhost:${PORT}/health`);
     console.log(`🔍 Analyze endpoint: http://localhost:${PORT}/api/analyze`);
     console.log(`\n⚡ Update your frontend to call: http://localhost:${PORT}/api/analyze\n`);
