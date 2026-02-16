@@ -5,13 +5,13 @@ export type StoredResume = {
     jobDescription: string;
     fileName: string;
     createdAt: number;
-
     resumeText: string;
     imageDataUrl?: string;
     feedback?: any;
 };
 
-const KEY = "resumecraft:resumes"; // ← updated
+const NEW_KEY = "resumecraft:resumes";
+const OLD_KEY = "resumind:resumes";
 
 function safeParse<T>(raw: string | null, fallback: T): T {
     if (!raw) return fallback;
@@ -22,10 +22,25 @@ function safeParse<T>(raw: string | null, fallback: T): T {
     }
 }
 
+function migrateIfNeeded() {
+    if (typeof window === "undefined") return;
+
+    const existingNew = safeParse<StoredResume[]>(localStorage.getItem(NEW_KEY), []);
+    if (existingNew.length > 0) return;
+
+    const oldData = safeParse<StoredResume[]>(localStorage.getItem(OLD_KEY), []);
+    if (oldData.length === 0) return;
+
+    localStorage.setItem(NEW_KEY, JSON.stringify(oldData));
+    // Optional: remove old key after migration
+    // localStorage.removeItem(OLD_KEY);
+}
+
 export const storage = {
     list(): StoredResume[] {
         if (typeof window === "undefined") return [];
-        return safeParse<StoredResume[]>(localStorage.getItem(KEY), []);
+        migrateIfNeeded();
+        return safeParse<StoredResume[]>(localStorage.getItem(NEW_KEY), []);
     },
 
     get(id: string): StoredResume | undefined {
@@ -35,19 +50,19 @@ export const storage = {
     upsert(item: StoredResume) {
         const all = storage.list();
         const idx = all.findIndex((r) => r.id === item.id);
-
         if (idx >= 0) all[idx] = item;
         else all.unshift(item);
-
-        localStorage.setItem(KEY, JSON.stringify(all));
+        localStorage.setItem(NEW_KEY, JSON.stringify(all));
     },
 
     remove(id: string) {
         const all = storage.list().filter((r) => r.id !== id);
-        localStorage.setItem(KEY, JSON.stringify(all));
+        localStorage.setItem(NEW_KEY, JSON.stringify(all));
     },
 
     wipe() {
-        localStorage.setItem(KEY, JSON.stringify([]));
+        localStorage.setItem(NEW_KEY, JSON.stringify([]));
+        // Optional: also wipe old key
+        // localStorage.setItem(OLD_KEY, JSON.stringify([]));
     },
 };

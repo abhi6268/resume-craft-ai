@@ -85,7 +85,10 @@ const Upload = () => {
             setStatusText("Generating preview image...");
             setCurrentStep(2);
             const imageFile = await convertPdfToImage(file);
+            console.log("convertPdfToImage result:", imageFile);
+            console.log("imageFile?.file size:", imageFile?.file?.size);
             let imageDataUrl: string | undefined;
+            console.log("Storing imageDataUrl length:", imageDataUrl?.length);
 
             if (imageFile?.file) {
                 imageDataUrl = await new Promise<string>((resolve, reject) => {
@@ -100,17 +103,31 @@ const Upload = () => {
             setCurrentStep(3);
             const id = generateUUID();
 
-            storage.upsert({
-                id,
-                companyName,
-                jobTitle,
-                jobDescription,
-                fileName: file.name,
-                createdAt: Date.now(),
-                resumeText,
-                imageDataUrl,
-                feedback: undefined,
-            });
+            try {
+                storage.upsert({
+                    id,
+                    companyName,
+                    jobTitle,
+                    jobDescription,
+                    fileName: file.name,
+                    createdAt: Date.now(),
+                    resumeText,
+                    imageDataUrl, // now should be smaller
+                    feedback: undefined,
+                });
+            } catch (e) {
+                console.warn("Failed to save to localStorage (likely quota). Preview will be unavailable.", e);
+                storage.upsert({
+                    id,
+                    companyName,
+                    jobTitle,
+                    jobDescription,
+                    fileName: file.name,
+                    createdAt: Date.now(),
+                    resumeText,
+                    feedback: undefined,
+                });
+            }
 
             const response = await postAnalyze({ resumeText, jobTitle, jobDescription });
 
