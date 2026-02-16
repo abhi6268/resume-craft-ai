@@ -12,7 +12,9 @@ async function postAnalyze(payload: {
     jobTitle: string;
     jobDescription: string;
 }) {
-    const res = await fetch("/api/analyze", {
+    const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+
+    const res = await fetch(`${API_BASE}/api/analyze`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
