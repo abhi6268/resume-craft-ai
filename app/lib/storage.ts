@@ -6,17 +6,12 @@ export type StoredResume = {
     fileName: string;
     createdAt: number;
 
-    // what we actually analyze
     resumeText: string;
-
-    // optional preview
     imageDataUrl?: string;
-
-    // AI output
     feedback?: any;
 };
 
-const KEY = "resumind:resumes";
+const KEY = "resumecraft:resumes"; // ← updated
 
 function safeParse<T>(raw: string | null, fallback: T): T {
     if (!raw) return fallback;
@@ -40,8 +35,10 @@ export const storage = {
     upsert(item: StoredResume) {
         const all = storage.list();
         const idx = all.findIndex((r) => r.id === item.id);
+
         if (idx >= 0) all[idx] = item;
         else all.unshift(item);
+
         localStorage.setItem(KEY, JSON.stringify(all));
     },
 
