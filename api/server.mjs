@@ -1,12 +1,3 @@
-// Standalone API Server - Nuclear Option
-// Run this separately from your React app to completely bypass React Router issues
-// 
-// To use:
-// 1. Save this file as server.js in your project root
-// 2. Install: npm install express cors dotenv
-// 3. Run: node server.js
-// 4. Update frontend to call http://localhost:3001/api/analyze instead of /api/analyze
-
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -14,27 +5,33 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
-// Enable CORS for your frontend
+const allowedOrigins = new Set([
+    "https://resume-craft-ai-gray.vercel.app",
+    // add your custom domain too if you have one
+]);
+
 app.use(cors({
-    origin: function (origin, callback) {
-        // Allow requests with no origin (like curl)
+    origin(origin, callback) {
         if (!origin) return callback(null, true);
 
-        // Allow any localhost port
-        if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
-            return callback(null, true);
-        }
+        // local dev
+        if (
+            origin.startsWith("http://localhost:") ||
+            origin.startsWith("http://127.0.0.1:")
+        ) return callback(null, true);
 
-        callback(new Error('Not allowed by CORS'));
+        // production
+        if (allowedOrigins.has(origin)) return callback(null, true);
+
+        return callback(new Error("Not allowed by CORS"));
     },
-    credentials: true
+    credentials: true,
 }));
 
 app.use(express.json({ limit: '10mb' }));
 
-// Your prepareInstructions function
 const AIResponseFormat = `
 interface Feedback {
   overallScore: number; //max 100
@@ -150,7 +147,7 @@ app.post('/api/analyze', async (req, res) => {
     console.log('Body keys:', Object.keys(req.body));
     
     try {
-        const { resumeText, jobTitle, jobDescription } = req.body;
+        const { resumeText, jobTitle, jobDescription = "" } = req.body;
 
         // Validation
         if (!resumeText || typeof resumeText !== 'string') {
@@ -167,11 +164,8 @@ app.post('/api/analyze', async (req, res) => {
             });
         }
 
-        if (!jobDescription || typeof jobDescription !== 'string') {
-            return res.status(400).json({
-                ok: false,
-                error: 'Missing or invalid jobDescription'
-            });
+        if (typeof jobDescription !== "string") {
+            return res.status(400).json({ ok: false, error: "jobDescription must be a string" });
         }
 
         // Build prompt
